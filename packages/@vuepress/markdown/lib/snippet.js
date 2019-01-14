@@ -23,7 +23,13 @@ module.exports = function snippet (md, options = {}) {
 
     const start = pos + 3
     const end = state.skipSpacesBack(max, pos)
-    const rawPath = state.src.slice(start, end).trim().replace(/^@/, root)
+    const rawInfo = state.src.slice(start, end).trim().split(/[{:\s]/)
+    let lang
+    if (rawInfo[0].indexOf('lang=') === 0) {
+      lang = rawInfo[0].split('=')[1]
+      rawInfo.shift()
+    }
+    const rawPath = rawInfo[0].replace(/^@/, root)
     const filename = rawPath.split(/[{:\s]/).shift()
     const content = fs.existsSync(filename) ? fs.readFileSync(filename).toString() : 'Not found: ' + filename
     const meta = rawPath.replace(filename, '')
@@ -31,7 +37,7 @@ module.exports = function snippet (md, options = {}) {
     state.line = startLine + 1
 
     const token = state.push('fence', 'code', 0)
-    token.info = filename.split('.').pop() + meta
+    token.info = lang ? lang + meta : filename.split('.').pop() + meta
     token.content = content
     token.markup = '```'
     token.map = [startLine, startLine + 1]
